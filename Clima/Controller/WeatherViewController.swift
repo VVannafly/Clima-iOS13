@@ -21,13 +21,18 @@ class WeatherViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        locationManager.delegate = self
         
-        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestWhenInUseAuthorization()                 //Firstly usage permision request
+        locationManager.requestLocation()
         
+
         weatherManager.delegate = self
         searchTextField.delegate = self
         // Do any additional setup after loading the view.
     }
+    
+
 }
 
 //MARK: - UITextFieldDelegate
@@ -69,10 +74,34 @@ extension WeatherViewController: WeatherManagerDelegate {
         DispatchQueue.main.async {
             self.temperatureLabel.text = weather.temperatureString
             self.conditionImageView.image = UIImage(systemName: weather.conditionName )
+            self.cityLabel.text = weather.cityName
         }
     }
     
     func didFailWithError(error: Error) {
         print(error)
+    }
+}
+
+//MARK: - CLLocationManagerDelegate
+
+extension WeatherViewController: CLLocationManagerDelegate {
+    
+    @IBAction func locationPressed(_ sender: Any) {
+        locationManager.requestLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            locationManager.stopUpdatingLocation()                          //Необходимо остановить обновление локации для последующего обновления по запросу (IBAction)
+            let lat = location.coordinate.latitude
+            let lon = location.coordinate.longitude
+            weatherManager.fetchWeather(latitude: lat, longitude: lon)
+        }
+        
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("It was an error")
     }
 }
